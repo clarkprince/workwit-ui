@@ -1,4 +1,4 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://70.34.198.33:8080";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost";
 
 export const API_ENDPOINTS = {
   tenants: `${API_BASE_URL}/api/tenants`,

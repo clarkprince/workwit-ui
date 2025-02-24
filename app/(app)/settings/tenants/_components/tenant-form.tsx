@@ -13,11 +13,14 @@ import { useRouter } from "next/navigation";
 import { API_ENDPOINTS } from "@/config/api";
 import { toast } from "sonner";
 import { Loader } from "@/components/ui/loader";
+import { Switch } from "@/components/ui/switch";
 
 const formSchema = z.object({
   id: z.number(),
   synchroteamDomain: z.string().min(1, "Domain is required"),
   synchroteamAPIKey: z.string().min(1, "API Key is required"),
+  sendCompletedJobs: z.boolean(),
+  excludeJobsWithNoParts: z.boolean(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -31,6 +34,8 @@ export function TenantForm({ id }: { id: string }) {
       id: 0,
       synchroteamDomain: "",
       synchroteamAPIKey: "",
+      sendCompletedJobs: false,
+      excludeJobsWithNoParts: false,
     },
   });
 
@@ -42,8 +47,16 @@ export function TenantForm({ id }: { id: string }) {
       try {
         const res = await fetch(`${API_ENDPOINTS.tenants}/${id}`);
         if (!res.ok) throw new Error("Failed to load tenant");
-        const tenant = await res.json();
-        form.reset(tenant);
+        const data = await res.json();
+
+        const formData = {
+          id: data.tenant.id,
+          synchroteamDomain: data.tenant.synchroteamDomain,
+          synchroteamAPIKey: data.tenant.synchroteamAPIKey,
+          sendCompletedJobs: String(data.settings.find((s: any) => s.setting === "sendCompletedJobs")?.value).toLowerCase() === "true",
+          excludeJobsWithNoParts: String(data.settings.find((s: any) => s.setting === "excludeJobsWithNoParts")?.value).toLowerCase() === "true",
+        };
+        form.reset(formData);
       } catch (error) {
         console.error("Failed to load tenant:", error);
       } finally {
@@ -60,18 +73,33 @@ export function TenantForm({ id }: { id: string }) {
       const url = id === "new" ? API_ENDPOINTS.tenants : `${API_ENDPOINTS.tenants}/${id}`;
       const method = id === "new" ? "POST" : "PUT";
 
+      const transformedData = {
+        tenant: {
+          id: values.id,
+          synchroteamDomain: values.synchroteamDomain,
+          synchroteamAPIKey: values.synchroteamAPIKey,
+        },
+        settings: [
+          {
+            setting: "sendCompletedJobs",
+            value: String(values.sendCompletedJobs), // Explicitly convert to string
+          },
+          {
+            setting: "excludeJobsWithNoParts",
+            value: String(values.excludeJobsWithNoParts), // Explicitly convert to string
+          },
+        ],
+      };
+
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify(transformedData),
       });
 
       if (!res.ok) throw new Error("Failed to save tenant");
 
       toast.success(id === "new" ? "Tenant created successfully" : "Tenant updated successfully");
-
-      router.push("/settings/tenants");
-      router.refresh();
     } catch (error) {
       toast.error("Failed to save tenant");
       console.error("Failed to save tenant:", error);
@@ -116,6 +144,36 @@ export function TenantForm({ id }: { id: string }) {
                       <FormLabel>API Key</FormLabel>
                       <FormControl>
                         <Input {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="sendCompletedJobs"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border px-3 py-2">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-sm">Send Completed Jobs</FormLabel>
+                      </div>
+                      <FormControl>
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="excludeJobsWithNoParts"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border px-3 py-2">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-sm">Exclude Jobs With No Parts</FormLabel>
+                      </div>
+                      <FormControl>
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
                       </FormControl>
                     </FormItem>
                   )}

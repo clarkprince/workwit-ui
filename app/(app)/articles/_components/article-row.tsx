@@ -10,7 +10,7 @@ export function ArticleRow({ article }: { article: Article }) {
 
   return (
     <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 cursor-pointer" onClick={() => (window.location.href = articleUrl)}>
-      <td className="px-6 py-4">{article.Description}</td>
+      <td className="px-6 py-4 font-semibold text-sm">{article.Description}</td>
       <td className="px-6 py-4">{article.ArticleNumber}</td>
       <td className="px-6 py-4">{article.Unit || "-"}</td>
       <td className="px-6 py-4">{article.QuantityInStock}</td>

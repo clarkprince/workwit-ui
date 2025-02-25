@@ -20,9 +20,7 @@ const App: React.FC<AppProps> = ({ children }) => {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (pathname === "/activate") {
-      router.replace("/activate");
-    } else if (!user && !publicRoutes.includes(pathname)) {
+    if (!user && !publicRoutes.includes(pathname)) {
       router.replace("/login");
     } else if (user && pathname === "/login") {
       router.replace("/activities");

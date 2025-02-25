@@ -5,9 +5,11 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get("auth_token");
   const isAuthPage = request.nextUrl.pathname === "/login";
   const isActivatePage = request.nextUrl.pathname === "/activate";
+  const isRootPage = request.nextUrl.pathname === "/";
+  const hasCodeParam = request.nextUrl.searchParams.has("code");
 
-  // Allow access to activate page without authentication
-  if (isActivatePage) {
+  // Allow access to activate page or root with code parameter without authentication
+  if (isActivatePage || (isRootPage && hasCodeParam)) {
     return NextResponse.next();
   }
 

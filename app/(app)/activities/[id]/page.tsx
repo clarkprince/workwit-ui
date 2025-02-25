@@ -12,6 +12,10 @@ import { useEffect, useState } from "react";
 import { Loader } from "@/components/ui/loader";
 
 function JsonDisplay({ data }: { data: string }) {
+  if (!data || data.trim() === "") {
+    return <div className="text-sm">No data available</div>;
+  }
+
   try {
     const parsed = JSON.parse(data);
     return (
@@ -53,6 +57,21 @@ const ActivityPage = () => {
     fetchActivity();
   }, [params.id, searchParams]);
 
+  const getProcessBadgeColors = (process: string) => {
+    switch (process.toLowerCase()) {
+      case "parts":
+        return "bg-blue-800 text-white";
+      case "jobs":
+        return "bg-purple-800 text-white";
+      case "customers":
+        return "bg-yellow-800 text-white";
+      case "invoices":
+        return "bg-orange-800 text-white";
+      default:
+        return "bg-gray-800 text-white";
+    }
+  };
+
   const backUrl = searchParams.get("tenant") ? `/activities?tenant=${searchParams.get("tenant")}` : "/activities";
 
   if (loading) {
@@ -85,28 +104,35 @@ const ActivityPage = () => {
           <Card>
             <CardContent className="p-6">
               <h2 className="text-sm font-medium text-black mb-4">Activity Information</h2>
-              <dl className="grid grid-cols-4 gap-4">
+              <dl className="grid grid-cols-3 gap-4">
                 <div>
                   <dt className="font-semibold text-[13px] text-gray-500">Process</dt>
-                  <dd className="mt-1 text-[13px]">{activity.process}</dd>
+                  <dd className="mt-1 text-[13px]">
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${getProcessBadgeColors(activity.process)}`}>{activity.process}</span>
+                  </dd>
                 </div>
                 <div>
                   <dt className="font-semibold text-[13px] text-gray-500">Status</dt>
                   <dd className="mt-1 text-[13px]">
-                    <span className={`px-2 py-1 rounded-full text-xs ${activity.successful ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>{activity.successful ? "Success" : "Failed"}</span>
+                    <span className={`px-2.5 py-1 font-semibold rounded-full text-xs ${activity.successful ? "bg-green-200 text-green-950" : "bg-red-200 text-red-950"}`}>{activity.successful ? "Success" : "Failed"}</span>
                   </dd>
                 </div>
                 <div>
                   <dt className="font-semibold text-[13px] text-gray-500">Created At</dt>
                   <dd className="mt-1 text-[13px]">{format(new Date(activity.createdAt), "yyyy-MM-dd HH:mm")}</dd>
                 </div>
-                <div>
-                  <dt className="font-semibold text-[13px] text-gray-500">Message</dt>
-                  <dd className="mt-1 text-[13px] text-gray-600">{activity.message || "-"}</dd>
-                </div>
               </dl>
             </CardContent>
           </Card>
+
+          {activity.message && (
+            <Card>
+              <CardContent className="p-6">
+                <h2 className="text-sm font-medium text-black mb-4">Message</h2>
+                <p className="text-[13px] text-red-500 font-semibold">{activity.message}</p>
+              </CardContent>
+            </Card>
+          )}
 
           <div className="grid grid-cols-2 gap-6">
             <Card>
@@ -123,15 +149,6 @@ const ActivityPage = () => {
               </CardContent>
             </Card>
           </div>
-
-          {activity.message && (
-            <Card>
-              <CardContent className="p-6">
-                <h2 className="text-sm font-medium text-black mb-4">Message</h2>
-                <p className="text-[13px] text-red-500">{activity.message}</p>
-              </CardContent>
-            </Card>
-          )}
         </div>
       </div>
     </>

@@ -65,7 +65,7 @@ export function InvoiceList({ initialPage, size, from, tenant }: InvoiceListProp
   return (
     <>
       <table className="w-full text-sm text-left text-gray-500">
-        <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+        <thead className="text-xs text-gray-800 uppercase bg-slate-100">
           <tr>
             <th scope="col" className="px-6 py-3">
               Number

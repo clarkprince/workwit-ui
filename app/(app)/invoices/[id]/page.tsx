@@ -59,6 +59,7 @@ const InvoicePage = () => {
     <>
       <PageHeader
         breadcrumbs={[
+          { title: "Synchroteam", href: "#" },
           { title: "Invoices", href: backUrl },
           { title: `Invoice #${invoice.num}`, href: "#" },
         ]}

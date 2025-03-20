@@ -2,12 +2,12 @@
 
 import * as React from "react";
 import { BookOpen, Bot, GalleryVerticalEnd, Settings2, SquareTerminal } from "lucide-react";
+import { useAuth } from "../contexts/auth-context";
 
 import { NavMain } from "@/app/components/nav-main";
 import { NavUser } from "@/app/components/nav-user";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarRail } from "@/components/ui/sidebar";
 
-// This is sample data.
 const data = {
   user: {
     name: "Joakim Zachen",
@@ -42,6 +42,10 @@ const data = {
       icon: Bot,
       items: [
         {
+          title: "Parts",
+          url: "/parts",
+        },
+        {
           title: "Jobs",
           url: "/jobs",
         },
@@ -70,6 +74,27 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { user } = useAuth();
+
+  const userData = user
+    ? {
+        name: user.name,
+        email: user.email,
+        avatar: "",
+      }
+    : data.user;
+
+  // Filter menu items based on role
+  const filteredNavMain =
+    user?.role === "1"
+      ? data.navMain
+          .filter((item) => item.title === "Synchroteam")
+          .map((item) => ({
+            ...item,
+            items: item.items?.filter((subItem) => subItem.title === "Parts"),
+          }))
+      : data.navMain;
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -88,10 +113,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={filteredNavMain} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={userData} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

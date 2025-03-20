@@ -4,6 +4,7 @@ import { type Activity } from "@/types/activity";
 import { format } from "date-fns";
 import { JSX, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const getProcessBadgeColors = (process: string) => {
   switch (process.toLowerCase()) {
@@ -20,7 +21,18 @@ const getProcessBadgeColors = (process: string) => {
   }
 };
 
-export function ActivityRow({ activity }: { activity: Activity }) {
+interface ActivityRowProps {
+  activity: Activity;
+  selected?: boolean;
+  onSelectedChange?: (checked: boolean) => void;
+}
+
+const truncateText = (text: string | null, limit: number) => {
+  if (!text) return "N/A"; // Handle null or undefined text
+  return text.length > limit ? text.substring(0, limit) + "..." : text;
+};
+
+export function ActivityRow({ activity, selected, onSelectedChange }: ActivityRowProps) {
   const searchParams = useSearchParams();
   const tenant = searchParams.get("tenant");
   const activityUrl = tenant ? `/activities/${activity.id}?tenant=${tenant}` : `/activities/${activity.id}`;
@@ -28,13 +40,24 @@ export function ActivityRow({ activity }: { activity: Activity }) {
   const { activity1Id, activity2Id } = useMemo(
     () => ({
       activity1Id: extractIdFromJson(activity.activity1, false, activity.process),
-      activity2Id: !activity.activity2 ? <span className="font-semibold text-orange-600">{activity.message || "No activity 2"}</span> : extractIdFromJson(activity.activity2, true, activity.process),
+      activity2Id: !activity.activity2 ? <span className="font-semibold text-orange-600">{truncateText(activity.message, 50) || "No activity 2"}</span> : extractIdFromJson(activity.activity2, true, activity.process),
     }),
     [activity.activity1, activity.activity2, activity.process, activity.message]
   );
 
+  const handleRowClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking the checkbox cell
+    const target = e.target as HTMLElement;
+    if (target.closest("td:first-child")) return;
+
+    window.location.href = activityUrl;
+  };
+
   return (
-    <tr className="bg-white border-b hover:bg-gray-50 cursor-pointer" onClick={() => (window.location.href = activityUrl)}>
+    <tr className="bg-white border-b hover:bg-gray-50 cursor-pointer" onClick={handleRowClick}>
+      <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+        <Checkbox checked={selected} onCheckedChange={onSelectedChange} className="translate-y-0" />
+      </td>
       <td className="px-6 py-4">{activity.id}</td>
       <td className="px-6 py-4">
         <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${getProcessBadgeColors(activity.process)}`}>{activity.process}</span>

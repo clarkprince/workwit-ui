@@ -7,10 +7,15 @@ import { Loader } from "@/components/ui/loader";
 import { useEffect, useCallback, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, Redo } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export function ActivityFilters() {
+interface ActivityFiltersProps {
+  selectedCount: number;
+  onRerunSelected: () => void;
+}
+
+export function ActivityFilters({ selectedCount, onRerunSelected }: ActivityFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { tenants, loading, error } = useTenants();
@@ -124,6 +129,13 @@ export function ActivityFilters() {
           </Label>
           <Input id="to-date" type="date" className="w-auto" value={searchParams.get("to") || ""} onChange={(e) => updateFilters({ to: e.target.value })} />
         </div>
+
+        {selectedCount > 0 && (
+          <Button onClick={onRerunSelected} variant="secondary" size="sm" className="ml-4">
+            <Redo className="h-4 w-4 mr-2" />
+            Re-run {selectedCount} {selectedCount === 1 ? "activity" : "activities"}
+          </Button>
+        )}
       </div>
     </div>
   );

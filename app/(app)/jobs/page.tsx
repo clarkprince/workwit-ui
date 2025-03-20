@@ -18,7 +18,12 @@ const JobsPage = () => {
 
   return (
     <TenantProvider>
-      <PageHeader breadcrumbs={[{ title: "Jobs", href: "/jobs" }]} />
+      <PageHeader
+        breadcrumbs={[
+          { title: "Synchroteam", href: "#" },
+          { title: "Jobs", href: "/jobs" },
+        ]}
+      />
       <div className="p-6">
         <div className="mb-6">
           <h1 className="font-semibold tracking-tight">Jobs</h1>

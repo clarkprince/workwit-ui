@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { AuthResponse, validateToken } from "@/services/auth";
-import { setAuthCookie, removeAuthCookie, getAuthCookie } from "@/lib/cookies";
+import { removeAuthCookie, getAuthCookie, setUserCookie, clearUserCookies, getUserCookies } from "@/lib/cookies";
 import { Loader } from "@/components/ui/loader";
 
 interface AuthContextType {
@@ -13,38 +13,53 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<AuthResponse | null>(null);
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const [user, setUserState] = useState<AuthResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const validateAuth = async () => {
       const isValid = await validateToken();
       const token = getAuthCookie();
-      setUser(isValid && token ? { token, name: "", email: "" } : null);
+      const userData = getUserCookies();
+
+      if (isValid && token && userData.name && userData.email) {
+        setUserState({
+          token,
+          name: userData.name,
+          email: userData.email,
+          role: userData.role,
+        });
+      } else {
+        setUserState(null);
+      }
       setLoading(false);
     };
+
     validateAuth();
   }, []);
 
-  const handleSetUser = (userData: AuthResponse | null) => {
-    if (userData?.token) {
-      setAuthCookie(userData.token);
+  const setUser = (userData: AuthResponse | null) => {
+    setUserState(userData);
+    if (userData) {
+      setUserCookie(userData.name, userData.email, userData.role);
+    } else {
+      clearUserCookies();
     }
-    setUser(userData);
   };
 
   const logout = () => {
+    setUserState(null);
+    clearUserCookies();
     removeAuthCookie();
-    setUser(null);
   };
 
   if (loading) {
     return <Loader />;
   }
 
-  return <AuthContext.Provider value={{ user, setUser: handleSetUser, logout }}>{children}</AuthContext.Provider>;
-}
+  return <AuthContext.Provider value={{ user, setUser, logout }}>{children}</AuthContext.Provider>;
+};
 
 export const useAuth = () => {
   const context = useContext(AuthContext);

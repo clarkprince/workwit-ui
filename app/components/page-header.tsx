@@ -16,7 +16,7 @@ export function PageHeader({ breadcrumbs }: PageHeaderProps) {
       <Breadcrumb>
         <BreadcrumbList className="text-[13px]">
           {breadcrumbs.map((crumb, index) => (
-            <React.Fragment key={crumb.href || index}>
+            <React.Fragment key={index}>
               <BreadcrumbItem>{crumb.href ? <BreadcrumbLink href={crumb.href}>{crumb.title}</BreadcrumbLink> : <span>{crumb.title}</span>}</BreadcrumbItem>
               {index < breadcrumbs.length - 1 && <BreadcrumbSeparator />}
             </React.Fragment>

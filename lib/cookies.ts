@@ -14,3 +14,26 @@ export const getAuthCookie = () => {
   const tokenCookie = cookies.find((cookie) => cookie.trim().startsWith(`${TOKEN_NAME}=`));
   return tokenCookie ? tokenCookie.split("=")[1] : null;
 };
+
+export const setUserCookie = (name: string, email: string, role: string) => {
+  document.cookie = `user_name=${encodeURIComponent(name)};path=/`;
+  document.cookie = `user_email=${encodeURIComponent(email)};path=/`;
+  document.cookie = `user_role=${encodeURIComponent(role)};path=/`;
+};
+
+export const getUserCookies = () => {
+  const name = document.cookie.match("(^|;)\\s*user_name\\s*=\\s*([^;]+)")?.pop() || "";
+  const email = document.cookie.match("(^|;)\\s*user_email\\s*=\\s*([^;]+)")?.pop() || "";
+  const role = document.cookie.match("(^|;)\\s*user_role\\s*=\\s*([^;]+)")?.pop() || "";
+  return {
+    name: decodeURIComponent(name),
+    email: decodeURIComponent(email),
+    role: decodeURIComponent(role),
+  };
+};
+
+export const clearUserCookies = () => {
+  document.cookie = "user_name=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
+  document.cookie = "user_email=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
+  document.cookie = "user_role=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
+};

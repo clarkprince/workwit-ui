@@ -6,10 +6,11 @@ import { API_ENDPOINTS } from "@/config/api";
 import { type Activity } from "@/types/activity";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Redo } from "lucide-react";
 import { format } from "date-fns";
 import { useEffect, useState } from "react";
 import { Loader } from "@/components/ui/loader";
+import { toast } from "sonner";
 
 function JsonDisplay({ data }: { data: string }) {
   if (!data || data.trim() === "") {
@@ -74,6 +75,27 @@ const ActivityPage = () => {
 
   const backUrl = searchParams.get("tenant") ? `/activities?tenant=${searchParams.get("tenant")}` : "/activities";
 
+  const handleRerun = async () => {
+    if (!activity || !searchParams.get("tenant")) return;
+
+    try {
+      const response = await fetch(API_ENDPOINTS.activitiesRerun, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          tenant: searchParams.get("tenant")!,
+        },
+        body: JSON.stringify([activity.id]),
+      });
+
+      if (!response.ok) throw new Error("Failed to rerun activity");
+      toast.success("Activity was successfully rerun");
+    } catch (error) {
+      console.error("Error rerunning activity:", error);
+      toast.error("Failed to rerun activity");
+    }
+  };
+
   if (loading) {
     return <Loader />;
   }
@@ -91,13 +113,19 @@ const ActivityPage = () => {
         ]}
       />
       <div className="p-6">
-        <div className="flex items-center gap-4 mb-6">
-          <Button variant="ghost" size="icon" asChild>
-            <a href={backUrl}>
-              <ArrowLeft className="h-4 w-4" />
-            </a>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" asChild>
+              <a href={backUrl}>
+                <ArrowLeft className="h-4 w-4" />
+              </a>
+            </Button>
+            <h1 className="font-semibold">Activity #{activity.id}</h1>
+          </div>
+          <Button onClick={handleRerun} variant="secondary" size="sm">
+            <Redo className="h-4 w-4 mr-2" />
+            Re-run activity
           </Button>
-          <h1 className="font-semibold">Activity #{activity.id}</h1>
         </div>
 
         <div className="space-y-6">

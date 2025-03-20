@@ -8,5 +8,7 @@ export const API_ENDPOINTS = {
   jobs: `${API_BASE_URL}/api/jobs`,
   invoices: `${API_BASE_URL}/api/invoices`,
   activities: `${API_BASE_URL}/api/activities`,
+  activitiesRerun: `${API_BASE_URL}/api/activities/rerun`,
   login: `${API_BASE_URL}/api/users/login`,
+  createUser: `${API_BASE_URL}/api/users/create`,
 };

@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { AuthProvider } from "../contexts/auth-context";
 import App from "./App";
 
-const PUBLIC_ROUTES = ["/activate"];
+const PUBLIC_ROUTES = ["/activate", "/create-user"];
 
 export function AuthWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

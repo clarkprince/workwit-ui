@@ -1,44 +1,42 @@
 "use client";
 
 import { PageHeader } from "@/app/components/page-header";
-import { InvoiceList } from "./_components/invoice-list";
-import { InvoiceFilters } from "./_components/invoice-filters";
+import { PartsList } from "./_components/parts-list";
+import { PartsFilters } from "./_components/parts-filters";
 import { TenantProvider } from "../customers/_components/tenant-context";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-const InvoicesPage = () => {
+const PartsPage = () => {
   const searchParams = useSearchParams();
-
-  const sizeStr = searchParams.get("size") || "10";
+  const [listKey, setListKey] = useState(0);
+  const sizeStr = searchParams.get("size") || "25";
   const tenant = searchParams.get("tenant") || "";
-  const from = searchParams.get("from") || "";
-
-  const size = Number.isNaN(parseInt(sizeStr)) ? 5 : parseInt(sizeStr);
+  const size = Number.isNaN(parseInt(sizeStr)) ? 25 : parseInt(sizeStr);
 
   return (
     <TenantProvider>
       <PageHeader
         breadcrumbs={[
           { title: "Synchroteam", href: "#" },
-          { title: "Invoices", href: "/invoices" },
+          { title: "Parts", href: "/parts" },
         ]}
       />
       <div className="p-6">
         <div className="mb-6">
-          <h1 className="font-semibold tracking-tight">Invoices</h1>
+          <h1 className="font-semibold tracking-tight">Parts</h1>
         </div>
         <div className="mb-6">
           <Suspense fallback={<div>Loading filters...</div>}>
-            <InvoiceFilters skipInitialTenant={!!tenant} />
+            <PartsFilters skipInitialTenant={!!tenant} onRefresh={() => setListKey((prev) => prev + 1)} />
           </Suspense>
         </div>
         <div className="relative overflow-x-auto">
-          <InvoiceList initialPage={1} size={size} from={from} tenant={tenant} />
+          <PartsList key={listKey} initialPage={1} size={size} tenant={tenant} />
         </div>
       </div>
     </TenantProvider>
   );
 };
 
-export default InvoicesPage;
+export default PartsPage;

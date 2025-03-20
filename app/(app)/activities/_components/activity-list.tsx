@@ -6,6 +6,7 @@ import { API_ENDPOINTS } from "@/config/api";
 import { PaginationBar } from "@/components/ui/pagination";
 import { Loader } from "@/components/ui/loader";
 import { type ActivityListResponse } from "@/types/activity";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface ActivityListProps {
   initialPage: number;
@@ -15,9 +16,11 @@ interface ActivityListProps {
   from?: string;
   to?: string;
   process?: string;
+  selectedActivities: number[];
+  setSelectedActivities: React.Dispatch<React.SetStateAction<number[]>>;
 }
 
-export function ActivityList({ initialPage, size, tenant, q, from, to, process }: ActivityListProps) {
+export function ActivityList({ initialPage, size, tenant, q, from, to, process, selectedActivities, setSelectedActivities }: ActivityListProps) {
   const [page, setPage] = useState(initialPage);
   const [data, setData] = useState<ActivityListResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -61,6 +64,15 @@ export function ActivityList({ initialPage, size, tenant, q, from, to, process }
     }
   }, [page, size, tenant, q, from, to, process]);
 
+  const toggleSelectAll = () => {
+    if (!data) return;
+    if (selectedActivities.length === data.data.length) {
+      setSelectedActivities([]);
+    } else {
+      setSelectedActivities(data.data.map((a) => a.id));
+    }
+  };
+
   if (loading)
     return (
       <div className="text-center p-4">
@@ -76,6 +88,9 @@ export function ActivityList({ initialPage, size, tenant, q, from, to, process }
       <table className="w-full text-sm text-left text-gray-500">
         <thead className="text-xs text-gray-800 uppercase bg-slate-100 dark:bg-gray-700 dark:text-gray-400">
           <tr>
+            <th scope="col" className="px-6 py-3">
+              <Checkbox checked={data?.data.length === selectedActivities.length} onCheckedChange={toggleSelectAll} />
+            </th>
             <th scope="col" className="px-6 py-3">
               ID
             </th>
@@ -99,12 +114,25 @@ export function ActivityList({ initialPage, size, tenant, q, from, to, process }
         <tbody>
           {data.data.length === 0 ? (
             <tr>
-              <td colSpan={6} className="px-6 pt-10 pb-4 text-center text-gray-500">
+              <td colSpan={7} className="px-6 pt-10 pb-4 text-center text-gray-500">
                 No results found
               </td>
             </tr>
           ) : (
-            data.data.map((activity) => <ActivityRow key={activity.id} activity={activity} />)
+            data.data.map((activity) => (
+              <ActivityRow
+                key={activity.id}
+                activity={activity}
+                selected={selectedActivities.includes(activity.id)}
+                onSelectedChange={(checked) => {
+                  if (checked) {
+                    setSelectedActivities((prev) => [...prev, activity.id]);
+                  } else {
+                    setSelectedActivities((prev) => prev.filter((id) => id !== activity.id));
+                  }
+                }}
+              />
+            ))
           )}
         </tbody>
       </table>

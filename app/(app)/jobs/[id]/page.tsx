@@ -54,6 +54,7 @@ const JobPage = () => {
     <>
       <PageHeader
         breadcrumbs={[
+          { title: "Synchroteam", href: "#" },
           { title: "Jobs", href: backUrl },
           { title: `Job #${job.num}`, href: "#" },
         ]}

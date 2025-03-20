@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation"; // Changed from next/router
+import Link from "next/link";
+import { setAuthCookie } from "@/lib/cookies";
 
 // Login Component
 const Login: React.FC = () => {
@@ -20,14 +22,11 @@ const Login: React.FC = () => {
     e.preventDefault();
     try {
       const userData = await login(email, password);
-      setUser(userData); // This will now also set the cookie
+      setAuthCookie(userData.token); // Set the auth token cookie
+      setUser(userData);
       router.replace("/activities");
     } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message);
-      } else {
-        toast.error("An unexpected error occurred");
-      }
+      toast.error(error instanceof Error ? error.message : "Login failed");
     }
   };
 
@@ -35,7 +34,7 @@ const Login: React.FC = () => {
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <Card className="w-96 mt-[-10%]">
         <CardHeader>
-          <CardTitle>Welcome Back</CardTitle>
+          <CardTitle>Welcome</CardTitle>
           <CardDescription>Enter your credentials to continue</CardDescription>
         </CardHeader>
         <CardContent>
@@ -49,6 +48,12 @@ const Login: React.FC = () => {
             <Button type="submit" className="w-full">
               Sign In
             </Button>
+            <div className="text-center text-sm text-gray-500">
+              Don&apos;t have an account?{" "}
+              <Link href="/create-user" className="text-sky-600">
+                Create Account
+              </Link>
+            </div>
           </form>
         </CardContent>
       </Card>

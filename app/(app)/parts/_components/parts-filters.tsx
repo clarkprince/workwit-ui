@@ -11,12 +11,14 @@ import { Upload } from "lucide-react";
 import { API_ENDPOINTS } from "@/config/api";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/app/contexts/auth-context";
 
 export function PartsFilters({ skipInitialTenant = false, onRefresh }: { skipInitialTenant?: boolean; onRefresh?: () => void }) {
   const [uploading, setUploading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { tenants, loading, error } = useTenants();
+  const { user } = useAuth();
 
   const updateFilters = useCallback(
     (tenant?: string, from?: string) => {
@@ -79,23 +81,25 @@ export function PartsFilters({ skipInitialTenant = false, onRefresh }: { skipIni
 
   return (
     <div className="flex gap-4 mb-4 items-center justify-between">
-      <div className="gap-2 flex items-center">
-        <Label htmlFor="tenant-select" className="text-[13px]">
-          Tenant
-        </Label>
-        <Select value={currentTenant} onValueChange={(value) => updateFilters(value, undefined)}>
-          <SelectTrigger id="tenant-select" className="w-[200px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {tenants.map((tenant) => (
-              <SelectItem key={tenant.synchroteamDomain} value={tenant.synchroteamDomain}>
-                {tenant.synchroteamDomain}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {user?.role !== "1" && (
+        <div className="gap-2 flex items-center">
+          <Label htmlFor="tenant-select" className="text-[13px]">
+            Tenant
+          </Label>
+          <Select value={currentTenant} onValueChange={(value) => updateFilters(value, undefined)}>
+            <SelectTrigger id="tenant-select" className="w-[200px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {tenants.map((tenant) => (
+                <SelectItem key={tenant.synchroteamDomain} value={tenant.synchroteamDomain}>
+                  {tenant.synchroteamDomain}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       <div className="flex items-center gap-4">
         <div className="gap-2 flex items-center">

@@ -6,6 +6,7 @@ export interface AuthResponse {
   name: string;
   email: string;
   role: string;
+  tenant: string;
 }
 
 export const login = async (email: string, password: string): Promise<AuthResponse> => {
@@ -15,17 +16,19 @@ export const login = async (email: string, password: string): Promise<AuthRespon
     body: JSON.stringify({ email, password }),
   });
 
-  const data = await response.json();
-
   if (!response.ok) {
-    throw new Error(data.message || "Login failed");
+    const err = await response.text();
+    throw new Error(err || "Login failed");
   }
+
+  const data = await response.json();
 
   return {
     token: data.token,
     name: data.name,
     email: data.email,
     role: data.role,
+    tenant: data.tenant,
   };
 };
 

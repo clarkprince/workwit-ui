@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get("auth_token");
+  const userRole = request.cookies.get("user_role");
   const isAuthPage = request.nextUrl.pathname === "/login";
   const isActivatePage = request.nextUrl.pathname === "/activate";
   const isCreateUserPage = request.nextUrl.pathname === "/create-user";
@@ -19,7 +20,8 @@ export function middleware(request: NextRequest) {
   }
 
   if (token && isAuthPage) {
-    return NextResponse.redirect(new URL("/activities", request.url));
+    const defaultPath = userRole?.value == "1" ? "/parts" : "/activities";
+    return NextResponse.redirect(new URL(defaultPath, request.url));
   }
 
   return NextResponse.next();

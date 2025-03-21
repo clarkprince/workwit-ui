@@ -29,6 +29,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           name: userData.name,
           email: userData.email,
           role: userData.role,
+          tenant: userData.tenant,
         });
       } else {
         setUserState(null);
@@ -42,7 +43,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const setUser = (userData: AuthResponse | null) => {
     setUserState(userData);
     if (userData) {
-      setUserCookie(userData.name, userData.email, userData.role);
+      setUserCookie(userData.name, userData.email, userData.role, userData.tenant);
     } else {
       clearUserCookies();
     }

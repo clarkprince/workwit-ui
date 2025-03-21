@@ -23,7 +23,8 @@ const App: React.FC<AppProps> = ({ children }) => {
     if (!user && !publicRoutes.includes(pathname)) {
       router.replace("/login");
     } else if (user && pathname === "/login") {
-      router.replace("/activities");
+      const defaultPath = user.role === "1" ? "/parts" : "/activities";
+      router.replace(defaultPath);
     }
   }, [user, router, pathname]);
 

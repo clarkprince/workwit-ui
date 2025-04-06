@@ -150,7 +150,7 @@ export function PartsFilters({ skipInitialTenant = false, onRefresh }: { skipIni
       </div>
 
       <div className="flex items-center gap-4">
-        <div className="gap-2 flex items-center">
+        <div className="gap-2 items-center hidden">
           <Label htmlFor="from-date" className="text-[13px]">
             From Date
           </Label>

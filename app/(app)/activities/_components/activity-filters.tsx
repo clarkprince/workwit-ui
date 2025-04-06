@@ -18,7 +18,7 @@ interface ActivityFiltersProps {
 export function ActivityFilters({ selectedCount, onRerunSelected }: ActivityFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { tenants, loading, error } = useTenants();
+  const { tenants, loading, error, defaultTenant } = useTenants();
   const [searchTerm, setSearchTerm] = useState(searchParams.get("q") || "");
 
   const updateFilters = useCallback(
@@ -56,10 +56,10 @@ export function ActivityFilters({ selectedCount, onRerunSelected }: ActivityFilt
   }, [searchParams]);
 
   useEffect(() => {
-    if (tenants.length > 0 && !searchParams.get("tenant")) {
-      updateFilters({ tenant: tenants[0].synchroteamDomain });
+    if (tenants.length > 0 && !searchParams.get("tenant") && defaultTenant) {
+      updateFilters({ tenant: defaultTenant });
     }
-  }, [tenants, searchParams, updateFilters]);
+  }, [tenants, searchParams, updateFilters, defaultTenant]);
 
   if (loading) return <Loader />;
   if (error) return <div>Error loading tenants</div>;

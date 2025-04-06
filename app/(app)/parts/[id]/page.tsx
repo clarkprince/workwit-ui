@@ -9,21 +9,23 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Loader } from "@/components/ui/loader";
+import { useAuth } from "@/app/contexts/auth-context";
 
 const PartPage = () => {
   const params = useParams();
   const searchParams = useSearchParams();
   const [part, setPart] = useState<Part | null>(null);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchPart = async () => {
       try {
-        const tenant = searchParams.get("tenant") || "";
+        const tenant = user?.role === "0" ? searchParams.get("tenant") || "" : user?.tenant;
         const id = params.id as string;
         const res = await fetch(`${API_ENDPOINTS.parts}/synchroteam/${id}`, {
           headers: {
-            tenant: tenant,
+            tenant: tenant || "",
           },
         });
         if (!res.ok) throw new Error("Failed to fetch part");
@@ -37,7 +39,7 @@ const PartPage = () => {
     };
 
     fetchPart();
-  }, [params.id, searchParams]);
+  }, [params.id, searchParams, user]);
 
   const backUrl = searchParams.get("tenant") ? `/parts?tenant=${searchParams.get("tenant")}` : "/parts";
 

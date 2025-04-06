@@ -1,40 +1,53 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { API_ENDPOINTS } from "@/config/api";
 import { type Tenant } from "@/types/tenant";
 
 interface TenantContextType {
   tenants: Tenant[];
   loading: boolean;
-  error: string | null;
+  error: Error | null;
+  defaultTenant: string | null;
 }
 
-const TenantContext = createContext<TenantContextType>({
-  tenants: [],
-  loading: true,
-  error: null,
-});
+const TenantContext = createContext<TenantContextType>({ tenants: [], loading: true, error: null, defaultTenant: null });
 
 export function TenantProvider({ children }: { children: React.ReactNode }) {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
+  const [defaultTenant, setDefaultTenant] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(API_ENDPOINTS.tenants)
-      .then((res) => res.json())
-      .then((data) => {
+    const fetchTenants = async () => {
+      try {
+        const res = await fetch(API_ENDPOINTS.tenants);
+        if (!res.ok) throw new Error("Failed to fetch tenants");
+        const data = await res.json();
         setTenants(data);
+
+        // Set default tenant
+        if (data.length > 0) {
+          const savedTenant = localStorage.getItem("defaultTenant");
+          const defaultTenantDomain = savedTenant && data.find((t: Tenant) => t.synchroteamDomain === savedTenant) ? savedTenant : data[0].synchroteamDomain;
+
+          setDefaultTenant(defaultTenantDomain);
+          localStorage.setItem("defaultTenant", defaultTenantDomain);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error("Failed to fetch tenants"));
+      } finally {
         setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
+      }
+    };
+
+    fetchTenants();
   }, []);
 
-  return <TenantContext.Provider value={{ tenants, loading, error }}>{children}</TenantContext.Provider>;
+  return <TenantContext.Provider value={{ tenants, loading, error, defaultTenant }}>{children}</TenantContext.Provider>;
 }
 
-export const useTenants = () => useContext(TenantContext);
+export function useTenants() {
+  return useContext(TenantContext);
+}

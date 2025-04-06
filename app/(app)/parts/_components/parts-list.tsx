@@ -6,18 +6,25 @@ import { PaginationBar } from "@/components/ui/pagination";
 import { Loader } from "@/components/ui/loader";
 import { type PartListResponse } from "@/types/part";
 import { PartsRow } from "./parts-row";
+import { useAuth } from "@/app/contexts/auth-context";
+import { useSearchParams } from "next/navigation"; // Import for URL params
 
 interface PartsListProps {
   initialPage: number;
   size: number;
-  tenant?: string;
+  from: string;
 }
 
-export function PartsList({ initialPage, size, tenant }: PartsListProps) {
+export function PartsList({ initialPage, size, from }: PartsListProps) {
+  const { user } = useAuth();
+  const searchParams = useSearchParams(); // Access URL parameters
   const [page, setPage] = useState(initialPage);
   const [data, setData] = useState<PartListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Determine tenant
+  const tenant = user?.role == "0" ? searchParams.get("tenant") || user?.tenant : user?.tenant;
 
   const fetchParts = useCallback(async () => {
     try {
@@ -27,10 +34,11 @@ export function PartsList({ initialPage, size, tenant }: PartsListProps) {
       const params = new URLSearchParams();
       if (size) params.append("size", size.toString());
       if (page) params.append("page", page.toString());
+      if (from) params.append("from", from);
 
       const res = await fetch(`${API_ENDPOINTS.parts}/synchroteam/list?${params}`, {
         headers: {
-          tenant: tenant || "",
+          ...(tenant ? { tenant } : {}), // Include tenant header only if defined
         },
       });
 
@@ -42,21 +50,20 @@ export function PartsList({ initialPage, size, tenant }: PartsListProps) {
     } finally {
       setLoading(false);
     }
-  }, [page, size, tenant]);
+  }, [page, size, from, tenant]);
 
   useEffect(() => {
-    if (tenant) {
-      fetchParts();
-    }
+    if (!tenant || tenant === "null") return;
+    fetchParts();
   }, [tenant, fetchParts]);
 
+  if (!tenant || tenant === "null") return null;
   if (loading)
     return (
       <div className="text-center p-4">
         <Loader />
       </div>
     );
-  if (!tenant) return <div className="text-center p-4">Please select a tenant first</div>;
   if (error) return <div className="text-red-500 text-center p-4">{error}</div>;
   if (!data) return null;
 

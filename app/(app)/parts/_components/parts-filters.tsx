@@ -7,7 +7,7 @@ import { Loader } from "@/components/ui/loader";
 import { useEffect, useCallback, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Upload } from "lucide-react";
+import { Upload, Search } from "lucide-react";
 import { API_ENDPOINTS } from "@/config/api";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import { useAuth } from "@/app/contexts/auth-context";
 
 export function PartsFilters({ skipInitialTenant = false, onRefresh }: { skipInitialTenant?: boolean; onRefresh?: () => void }) {
   const [uploading, setUploading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
   const { tenants, loading, error } = useTenants();
@@ -34,10 +35,11 @@ export function PartsFilters({ skipInitialTenant = false, onRefresh }: { skipIni
   );
 
   useEffect(() => {
-    if (tenants.length > 0 && !skipInitialTenant && !searchParams.get("tenant")) {
-      updateFilters(tenants[0].synchroteamDomain);
+    if (user?.role === "0" && tenants.length > 0 && !skipInitialTenant && (!searchParams.get("tenant") || searchParams.get("tenant") == "null")) {
+      const defaultTenant = user.tenant && user.tenant !== "null" ? user.tenant : tenants[0].synchroteamDomain; // Use user's tenant if available and not "null"
+      updateFilters(defaultTenant);
     }
-  }, [tenants, skipInitialTenant, searchParams, updateFilters]);
+  }, [tenants, skipInitialTenant, searchParams, updateFilters, user]);
 
   if (loading) return <Loader />;
   if (error) return <div>Error loading tenants</div>;
@@ -52,14 +54,16 @@ export function PartsFilters({ skipInitialTenant = false, onRefresh }: { skipIni
     const formData = new FormData();
     formData.append("file", file);
 
+    const tenant = user?.role === "0" ? searchParams.get("tenant") || "" : user?.tenant;
+
     try {
       setUploading(true);
       toast.loading("Uploading parts prices...");
 
-      const res = await fetch(`${API_ENDPOINTS.parts}/synchroteam/prices/upload`, {
+      const res = await fetch(`${API_ENDPOINTS.parts}/synchroteam/parts/upload`, {
         method: "POST",
         headers: {
-          tenant: currentTenant,
+          tenant: tenant || "", // Use tenant based on role and searchParams
         },
         body: formData,
       });
@@ -79,27 +83,71 @@ export function PartsFilters({ skipInitialTenant = false, onRefresh }: { skipIni
     }
   };
 
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchTerm) return;
+
+    const tenant = user?.role === "0" ? searchParams.get("tenant") || "" : user?.tenant;
+
+    try {
+      const res = await fetch(`${API_ENDPOINTS.parts}/synchroteam/search?reference=${encodeURIComponent(searchTerm)}`, {
+        headers: {
+          tenant: tenant || "",
+        },
+      });
+
+      if (res.status === 404) {
+        toast.error("Part not found");
+        return;
+      }
+
+      if (!res.ok) throw new Error("Search failed");
+
+      const data = await res.json();
+      if (data && data.id) {
+        router.push(`/parts/${data.id}?tenant=${tenant}`);
+      } else {
+        toast.error("Part not found");
+      }
+    } catch (error) {
+      toast.error("Failed to search part");
+      console.error("Search error:", error);
+    }
+  };
+
   return (
     <div className="flex gap-4 mb-4 items-center justify-between">
-      {user?.role !== "1" && (
-        <div className="gap-2 flex items-center">
-          <Label htmlFor="tenant-select" className="text-[13px]">
-            Tenant
-          </Label>
-          <Select value={currentTenant} onValueChange={(value) => updateFilters(value, undefined)}>
-            <SelectTrigger id="tenant-select" className="w-[200px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {tenants.map((tenant) => (
-                <SelectItem key={tenant.synchroteamDomain} value={tenant.synchroteamDomain}>
-                  {tenant.synchroteamDomain}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
+      <div className="flex gap-4 items-center">
+        {user?.role === "0" && (
+          <div className="gap-2 flex items-center">
+            <Label htmlFor="tenant-select" className="text-[13px]">
+              Tenant
+            </Label>
+            <Select value={currentTenant} onValueChange={(value) => updateFilters(value, undefined)}>
+              <SelectTrigger id="tenant-select" className="w-[200px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {tenants.map((tenant) => (
+                  <SelectItem key={tenant.synchroteamDomain} value={tenant.synchroteamDomain}>
+                    {tenant.synchroteamDomain}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        <form onSubmit={handleSearch} className="flex gap-2 items-center">
+          <div className="relative">
+            <Input type="search" placeholder="Search by reference..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-[300px] pl-10" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+          </div>
+          <Button type="submit" variant="secondary" size="sm">
+            Search
+          </Button>
+        </form>
+      </div>
 
       <div className="flex items-center gap-4">
         <div className="gap-2 flex items-center">

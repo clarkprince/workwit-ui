@@ -40,7 +40,6 @@ export function SettingsForm() {
         const res = await fetch(`${API_ENDPOINTS.settings}`);
         if (!res.ok) throw new Error("Failed to load settings");
         const settings: Setting[] = await res.json();
-        console.log(settings);
 
         const formValues: Partial<FormData> = {};
         settings.forEach((setting) => {

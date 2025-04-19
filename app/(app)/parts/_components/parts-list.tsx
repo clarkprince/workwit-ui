@@ -38,15 +38,28 @@ export function PartsList({ initialPage, size, from }: PartsListProps) {
 
       const res = await fetch(`${API_ENDPOINTS.parts}/synchroteam/list?${params}`, {
         headers: {
-          ...(tenant ? { tenant } : {}), // Include tenant header only if defined
+          ...(tenant ? { tenant } : {}),
         },
       });
 
       if (!res.ok) throw new Error("Failed to fetch parts");
       const result = await res.json();
-      setData(result);
+
+      // Update this section to handle the response correctly
+      setData({
+        data: result.data || [], // Direct access to data array
+        recordsTotal: result.recordsTotal || 0,
+        page: result.page || page,
+        pageSize: result.pageSize || size,
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load parts");
+      setData({
+        data: [],
+        recordsTotal: 0,
+        page: page,
+        pageSize: size,
+      });
     } finally {
       setLoading(false);
     }
@@ -65,7 +78,7 @@ export function PartsList({ initialPage, size, from }: PartsListProps) {
       </div>
     );
   if (error) return <div className="text-red-500 text-center p-4">{error}</div>;
-  if (!data) return null;
+  if (!data || !data.data) return null;
 
   return (
     <>
@@ -93,7 +106,7 @@ export function PartsList({ initialPage, size, from }: PartsListProps) {
           </tr>
         </thead>
         <tbody>
-          {data.data.length === 0 ? (
+          {!data.data || data.data.length === 0 ? (
             <tr>
               <td colSpan={6} className="px-6 pt-10 pb-4 text-center text-gray-500">
                 No results found
@@ -104,9 +117,9 @@ export function PartsList({ initialPage, size, from }: PartsListProps) {
           )}
         </tbody>
       </table>
-      {data.data.length > 0 && (
+      {data.data && data.data.length > 0 && (
         <div className="mt-6">
-          <PaginationBar currentPage={page} totalPages={Math.max(1, Math.ceil(data.recordsTotal / size))} onPageChange={setPage} />
+          <PaginationBar currentPage={page} totalPages={Math.max(1, Math.ceil((data.recordsTotal || 0) / size))} onPageChange={setPage} />
         </div>
       )}
     </>

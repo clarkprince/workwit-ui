@@ -13,7 +13,17 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/app/contexts/auth-context";
 
-export function PartsFilters({ skipInitialTenant = false, onRefresh }: { skipInitialTenant?: boolean; onRefresh?: () => void }) {
+export function PartsFilters({
+  skipInitialTenant = false,
+  onRefresh,
+  onUploadComplete,
+  onUploadError,
+}: {
+  skipInitialTenant?: boolean;
+  onRefresh?: () => void;
+  onUploadComplete?: (message: string) => void;
+  onUploadError?: (message: string) => void;
+}) {
   const [uploading, setUploading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const router = useRouter();
@@ -63,19 +73,23 @@ export function PartsFilters({ skipInitialTenant = false, onRefresh }: { skipIni
       const res = await fetch(`${API_ENDPOINTS.parts}/synchroteam/parts/upload`, {
         method: "POST",
         headers: {
-          tenant: tenant || "", // Use tenant based on role and searchParams
+          tenant: tenant || "",
+          email: user?.email || "",
         },
         body: formData,
       });
 
       if (!res.ok) throw new Error("Upload failed");
 
+      const data = await res.text();
       toast.dismiss();
-      toast.success("Parts uploaded successfully");
+      toast.success(`Parts queued successfully. Queue ID: ${data}`);
+      onUploadComplete?.(data);
       onRefresh?.();
     } catch (error) {
       toast.dismiss();
       toast.error("Failed to upload parts");
+      onUploadError?.("Failed to upload parts");
       console.error("Upload error:", error);
     } finally {
       setUploading(false);

@@ -7,11 +7,13 @@ import { useTenants } from "./tenant-context";
 import { Loader } from "@/components/ui/loader";
 import { useEffect, useCallback } from "react";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/app/contexts/auth-context";
 
 export function CustomerFilters({ skipInitialTenant = false }: { skipInitialTenant?: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { tenants, loading, error } = useTenants();
+  const { user } = useAuth();
 
   const updateFilters = useCallback(
     (tenant?: string, from?: string) => {
@@ -32,10 +34,11 @@ export function CustomerFilters({ skipInitialTenant = false }: { skipInitialTena
   );
 
   useEffect(() => {
-    if (tenants.length > 0 && !skipInitialTenant && !searchParams.get("tenant")) {
-      updateFilters(tenants[0].synchroteamDomain);
+    if (user?.role === "0" && tenants.length > 0 && !skipInitialTenant && (!searchParams.get("tenant") || searchParams.get("tenant") == "null")) {
+      const defaultTenant = user.tenant && user.tenant !== "null" ? user.tenant : tenants[0].synchroteamDomain;
+      updateFilters(defaultTenant);
     }
-  }, [tenants, skipInitialTenant, searchParams, updateFilters]);
+  }, [user, tenants, skipInitialTenant, searchParams, updateFilters]);
 
   if (loading) return <Loader />;
   if (error) return <div>Error loading tenants</div>;
@@ -45,23 +48,25 @@ export function CustomerFilters({ skipInitialTenant = false }: { skipInitialTena
 
   return (
     <div className="flex gap-4 mb-4 items-center justify-between">
-      <div className="gap-2 flex items-center">
-        <Label htmlFor="tenant-select" className="text-[13px]">
-          Tenant
-        </Label>
-        <Select value={currentTenant} onValueChange={(value) => updateFilters(value, undefined)}>
-          <SelectTrigger id="tenant-select" className="w-[200px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {tenants.map((tenant) => (
-              <SelectItem key={tenant.synchroteamDomain} value={tenant.synchroteamDomain}>
-                {tenant.synchroteamDomain}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {user?.role === "0" && (
+        <div className="gap-2 flex items-center">
+          <Label htmlFor="tenant-select" className="text-[13px]">
+            Tenant
+          </Label>
+          <Select value={currentTenant} onValueChange={(value) => updateFilters(value, undefined)}>
+            <SelectTrigger id="tenant-select" className="w-[200px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {tenants.map((tenant) => (
+                <SelectItem key={tenant.synchroteamDomain} value={tenant.synchroteamDomain}>
+                  {tenant.synchroteamDomain}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       <div className="gap-2 flex items-center">
         <Label htmlFor="from-date" className="text-[13px]">

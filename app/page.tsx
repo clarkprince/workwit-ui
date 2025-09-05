@@ -16,7 +16,7 @@ export default function Home() {
     if (code) {
       router.push(`/activate?code=${code}`);
     } else if (user) {
-      const defaultPath = user.role === "1" ? "/parts" : "/activities";
+      const defaultPath = user.role === "1" ? "/activities" : "/activities";
       const tenantParam = user.role === "0" && defaultTenant ? `?tenant=${defaultTenant}` : "";
       router.push(`${defaultPath}${tenantParam}`);
     } else {

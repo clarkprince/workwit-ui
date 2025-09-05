@@ -87,12 +87,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // Filter menu items based on role
   const filteredNavMain =
     user?.role === "1"
-      ? data.navMain
-          .filter((item) => item.title === "Synchroteam")
-          .map((item) => ({
-            ...item,
-            items: item.items?.filter((subItem) => subItem.title === "Parts"),
-          }))
+      ? [
+          // Include Activity for role 1 users
+          data.navMain.find((item) => item.title === "Activity"),
+          // Include Fortnox section for role 1 users
+          data.navMain.find((item) => item.title === "Fortnox"),
+          // Include full Synchroteam section for role 1 users
+          data.navMain.find((item) => item.title === "Synchroteam"),
+        ].filter((item): item is NonNullable<typeof item> => item !== undefined)
       : data.navMain;
 
   return (

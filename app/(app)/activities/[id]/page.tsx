@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { useEffect, useState } from "react";
 import { Loader } from "@/components/ui/loader";
 import { toast } from "sonner";
+import { useAuth } from "@/app/contexts/auth-context";
 
 function JsonDisplay({ data }: { data: string }) {
   if (!data || data.trim() === "") {
@@ -32,13 +33,15 @@ function JsonDisplay({ data }: { data: string }) {
 const ActivityPage = () => {
   const params = useParams();
   const searchParams = useSearchParams();
+  const { user } = useAuth();
   const [activity, setActivity] = useState<Activity | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchActivity = async () => {
       try {
-        const tenant = searchParams.get("tenant") || "";
+        const rawTenant = searchParams.get("tenant") || "";
+        const tenant = user?.role === "0" ? rawTenant : user?.tenant || "";
         const id = params.id as string;
         const res = await fetch(`${API_ENDPOINTS.activities}/${id}`, {
           headers: {
@@ -56,7 +59,7 @@ const ActivityPage = () => {
     };
 
     fetchActivity();
-  }, [params.id, searchParams]);
+  }, [params.id, searchParams, user?.role, user?.tenant]);
 
   const getProcessBadgeColors = (process: string) => {
     switch (process.toLowerCase()) {
@@ -73,17 +76,22 @@ const ActivityPage = () => {
     }
   };
 
-  const backUrl = searchParams.get("tenant") ? `/activities?tenant=${searchParams.get("tenant")}` : "/activities";
+  const backUrl = user?.role === "0" && searchParams.get("tenant") ? `/activities?tenant=${searchParams.get("tenant")}` : "/activities";
 
   const handleRerun = async () => {
-    if (!activity || !searchParams.get("tenant")) return;
+    if (!activity) return;
+
+    const rawTenant = searchParams.get("tenant") || "";
+    const tenant = user?.role === "0" ? rawTenant : user?.tenant || "";
+
+    if (!tenant) return;
 
     try {
       const response = await fetch(API_ENDPOINTS.activitiesRerun, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          tenant: searchParams.get("tenant")!,
+          tenant: tenant,
         },
         body: JSON.stringify([activity.id]),
       });

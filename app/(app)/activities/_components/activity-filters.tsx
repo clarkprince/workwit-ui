@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Search, Redo } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/app/contexts/auth-context";
 
 interface ActivityFiltersProps {
   selectedCount: number;
@@ -18,7 +19,8 @@ interface ActivityFiltersProps {
 export function ActivityFilters({ selectedCount, onRerunSelected }: ActivityFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { tenants, loading, error, defaultTenant } = useTenants();
+  const { tenants, loading, error } = useTenants();
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState(searchParams.get("q") || "");
 
   const updateFilters = useCallback(
@@ -56,10 +58,11 @@ export function ActivityFilters({ selectedCount, onRerunSelected }: ActivityFilt
   }, [searchParams]);
 
   useEffect(() => {
-    if (tenants.length > 0 && !searchParams.get("tenant") && defaultTenant) {
+    if (user?.role === "0" && tenants.length > 0 && (!searchParams.get("tenant") || searchParams.get("tenant") == "null")) {
+      const defaultTenant = user.tenant && user.tenant !== "null" ? user.tenant : tenants[0].synchroteamDomain;
       updateFilters({ tenant: defaultTenant });
     }
-  }, [tenants, searchParams, updateFilters, defaultTenant]);
+  }, [user, tenants, searchParams, updateFilters]);
 
   if (loading) return <Loader />;
   if (error) return <div>Error loading tenants</div>;
@@ -68,23 +71,25 @@ export function ActivityFilters({ selectedCount, onRerunSelected }: ActivityFilt
   return (
     <div className="flex items-center justify-between">
       <div className="flex gap-4 items-center">
-        <div className="flex gap-2 items-center">
-          <Label htmlFor="tenant-select" className="text-[13px]">
-            Tenant
-          </Label>
-          <Select value={searchParams.get("tenant") || tenants[0].synchroteamDomain} onValueChange={(value) => updateFilters({ tenant: value })}>
-            <SelectTrigger id="tenant-select" className="w-[200px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {tenants.map((tenant) => (
-                <SelectItem key={tenant.synchroteamDomain} value={tenant.synchroteamDomain}>
-                  {tenant.synchroteamDomain}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {user?.role === "0" && (
+          <div className="flex gap-2 items-center">
+            <Label htmlFor="tenant-select" className="text-[13px]">
+              Tenant
+            </Label>
+            <Select value={searchParams.get("tenant") || tenants[0].synchroteamDomain} onValueChange={(value) => updateFilters({ tenant: value })}>
+              <SelectTrigger id="tenant-select" className="w-[200px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {tenants.map((tenant) => (
+                  <SelectItem key={tenant.synchroteamDomain} value={tenant.synchroteamDomain}>
+                    {tenant.synchroteamDomain}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         <div className="flex gap-2 items-center">
           <Label htmlFor="process-select" className="text-[13px]">

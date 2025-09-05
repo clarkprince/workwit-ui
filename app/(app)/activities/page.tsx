@@ -5,19 +5,25 @@ import { ActivityList } from "./_components/activity-list";
 import { ActivityFilters } from "./_components/activity-filters";
 import { TenantProvider } from "../customers/_components/tenant-context";
 import { API_ENDPOINTS } from "@/config/api";
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { ProcessMonitor } from "./_components/process-monitor";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Loader } from "@/components/ui/loader";
 import { toast } from "sonner";
+import { useAuth } from "@/app/contexts/auth-context";
+import { useTenants } from "../customers/_components/tenant-context";
 
 const ActivitiesPage = () => {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const { user } = useAuth();
+  const { tenants } = useTenants();
   const [selectedActivities, setSelectedActivities] = useState<number[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const pageStr = searchParams.get("page") || "1";
   const sizeStr = searchParams.get("size") || "10";
-  const tenant = searchParams.get("tenant") || "";
+  const rawTenant = searchParams.get("tenant") || "";
   const q = searchParams.get("q") || "";
   const from = searchParams.get("from") || "";
   const to = searchParams.get("to") || "";
@@ -26,15 +32,28 @@ const ActivitiesPage = () => {
   const page = Number.isNaN(parseInt(pageStr)) ? 1 : parseInt(pageStr);
   const size = Number.isNaN(parseInt(sizeStr)) ? 10 : parseInt(sizeStr);
 
+  // Determine the correct tenant based on user role
+  const tenant = user?.role === "0" ? rawTenant : user?.tenant || "";
+
+  useEffect(() => {
+    if (user?.role === "0" && tenants.length > 0 && !searchParams.get("tenant")) {
+      const query = `?tenant=${tenants[0].synchroteamDomain}`;
+      router.push(`/activities${query}`);
+    } else {
+      setIsInitialized(true);
+    }
+  }, [user, tenants, searchParams, router]);
+
   const handleRerunSelected = async () => {
-    if (!searchParams.get("tenant") || selectedActivities.length === 0) return;
+    const currentTenant = user?.role === "0" ? searchParams.get("tenant") : user?.tenant;
+    if (!currentTenant || selectedActivities.length === 0) return;
 
     try {
       const response = await fetch(API_ENDPOINTS.activitiesRerun, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          tenant: searchParams.get("tenant")!,
+          tenant: currentTenant,
         },
         body: JSON.stringify(selectedActivities),
       });
@@ -47,6 +66,14 @@ const ActivitiesPage = () => {
       toast.error("Failed to rerun activities");
     }
   };
+
+  if (!isInitialized) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader />
+      </div>
+    );
+  }
 
   return (
     <TenantProvider>

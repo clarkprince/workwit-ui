@@ -23,7 +23,7 @@ const App: React.FC<AppProps> = ({ children }) => {
     if (!user && !publicRoutes.includes(pathname)) {
       router.replace("/login");
     } else if (user && pathname === "/login") {
-      const defaultPath = user.role === "1" ? "/parts" : "/activities";
+      const defaultPath = "/activities";
       const tenantParam = user.role === "0" && user.tenant ? `?tenant=${user.tenant}` : "";
       router.replace(`${defaultPath}${tenantParam}`);
     }
